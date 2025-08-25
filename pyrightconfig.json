@@ -1,0 +1,15 @@
+{
+    "include": [
+        "**/*.py"
+    ],
+    "extraPaths": [
+        "./response",
+        "."
+    ],
+    "typeCheckingMode": "basic",
+    "useLibraryCodeForTypes": true,
+    "autoImportCompletions": true
+}
+
+
+
