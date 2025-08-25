@@ -20,10 +20,11 @@ async def generate_sql_where_clause(user_query: str) -> tuple[list[str], str]:
 
 Given a user's natural language query, generate appropriate SQL WHERE clause conditions for the monitor_rules table.
 
+IMPORTANT: When filtering by monitor name, use m.monitor_system_name (from the monitored_feeds table), NOT r.monitor_name.
+
 Table schema:
 - rule_id: Unique rule identifier
 - monitor_id: Monitor identifier (links to monitored_feeds)
-- monitor_name: Monitor system name (from monitored_feeds table)
 - rule_name: Rule name
 - is_violated: Current violation status (TRUE/FALSE)
 - execute_on: Execution time
@@ -49,6 +50,7 @@ Examples:
 - "Show rules with reminders enabled" → {"where_conditions": ["r.do_remind = 'TRUE'"], "query_description": "rules with reminders enabled"}
 - "Get enabled rules that are not violated" → {"where_conditions": ["r.is_enabled = 'TRUE'", "r.is_violated = 'FALSE'"], "query_description": "enabled non-violated rules"}
 - "Find rules for SAP monitor" → {"where_conditions": ["m.monitor_system_name LIKE '%SAP%'"], "query_description": "rules for SAP monitor"}
+- "Get all rules for 'SAP Order Payment Failure Monitor'" → {"where_conditions": ["m.monitor_system_name = 'SAP Order Payment Failure Monitor'"], "query_description": "rules for SAP Order Payment Failure Monitor"}
 - "Show me rules that execute daily" → {"where_conditions": ["r.execute_on LIKE '%daily%'"], "query_description": "daily executing rules"}
 - "Get rules with 15 minute intervals" → {"where_conditions": ["r.interval_mins = 15"], "query_description": "rules with 15 minute intervals"}
 
