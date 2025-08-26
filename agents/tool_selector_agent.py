@@ -7,9 +7,10 @@ from ollama_client.ollama_client import OllamaClient
 from tools.rules_tool import query_monitor_rules_dynamic
 from tools.rules_log_tool import query_monitor_rules_logs_dynamic
 from tools.monitor_feeds_tool import query_monitor_feeds_dynamic
+from tools.analytics_tool import execute_analytics_query
 
 
-async def select_tool_and_execute(user_query: str) -> str:
+async def select_tool_and_execute(user_query: str) -> str | dict:
     """Simple tool selection: determine which tool to use based on query keywords."""
     try:
         print(f"🤖 Simple tool selection for: '{user_query}'")
@@ -37,10 +38,17 @@ HISTORICAL_LOGS: Use for queries about past events and audit history
 - Rollback events and remediation actions
 - Examples: "show logs", "audit history", "past violations", "alert history", "rollback events"
 
+ANALYTICS: Use for complex queries that require multiple tables, aggregations, or comparisons
+- Queries with "most", "highest", "average", "count", "group by"
+- Comparing data across multiple monitors or rules
+- Finding patterns, trends, or rankings
+- Examples: "which monitor has most rules", "violation rates by priority", "top 5 monitors", "average rules per monitor"
+
 Key distinction:
 - "monitors" or "monitor configuration" = MONITOR_FEEDS
 - "violated rules" = CURRENT_RULES (current state)
 - "violation events" or "violation logs" = HISTORICAL_LOGS (past events)
+- "most", "highest", "average", "count", "group by" = ANALYTICS
 
 User Query: "{user_query}"
 
@@ -48,6 +56,7 @@ Respond with EXACTLY one of these options:
 MONITOR_FEEDS
 CURRENT_RULES
 HISTORICAL_LOGS
+ANALYTICS
 
 Tool choice:"""
 
@@ -71,6 +80,10 @@ Tool choice:"""
             print(f"📜 Executing historical logs tool for: '{user_query}'")
             result = await query_monitor_rules_logs_dynamic.ainvoke({"user_query": user_query})
             return result
+        elif "ANALYTICS" in tool_choice:
+            print(f"🧠 Executing analytics tool for: '{user_query}'")
+            result = await execute_analytics_query(user_query)
+            return result
         else:
             print(f"❓ Unclear selection '{tool_choice}', defaulting to monitor feeds")
             result = await query_monitor_feeds_dynamic.ainvoke({"user_query": user_query})
@@ -82,7 +95,7 @@ Tool choice:"""
         return f'{{"error": "{error_msg}"}}'
 
 
-async def query_with_agent(user_query: str) -> str:
+async def query_with_agent(user_query: str) -> str | dict:
     """Use simple tool selection to process a user query and return results."""
     return await select_tool_and_execute(user_query)
 

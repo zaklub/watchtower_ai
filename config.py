@@ -29,8 +29,8 @@ API_CONFIG = {
 
 # Intent Classification Keywords
 INTENT_KEYWORDS = {
-    "create_rule": ['create', 'set', 'setup', 'configure', 'add', 'new', 'alert', 'monitor', 'watch'],
-    "monitoring_details": ['show', 'get', 'view', 'display', 'chart', 'report', 'violations', 'status', 'data', 'analytics', 'list', 'rules'],
+    "create_rule": ['create', 'set', 'setup', 'configure', 'add', 'new', 'alert', 'watch'],
+    "monitoring_details": ['show', 'get', 'view', 'display', 'chart', 'report', 'violations', 'status', 'data', 'analytics', 'list', 'rules', 'monitor', 'most', 'highest', 'average', 'count', 'group by', 'which', 'what', 'how many', 'give me'],
     "chart": ['chart', 'graph', 'plot', 'trend', 'visual', 'show', 'display'],
     "table": ['table', 'list', 'breakdown', 'details', 'data', 'rows']
 }
@@ -174,15 +174,17 @@ INTENT_CLASSIFICATION_PROMPT = """
 Classify the following query into one of these intents:
 
 1. "monitoring_details" - if the user wants to GET/RETRIEVE/VIEW existing monitoring data, rules, reports, violations, charts, or analytics
-   Examples: "show me rules", "list all violations", "get monitoring data", "view status"
+   Examples: "show me rules", "list all violations", "get monitoring data", "view status", "which monitor has most rules", "give me analytics", "what's the violation rate", "monitors with highest rule count"
 
 2. "create_rule" - if the user wants to CREATE/ADD/CONFIGURE new monitoring rules or alerts
-   Examples: "create a rule", "set up monitoring", "add an alert", "configure new monitor"
+   Examples: "create a rule", "set up monitoring", "add an alert", "configure new monitor", "set up a new alert"
 
 3. "generic_question" - if it's a general question about capabilities, help, what the system can do
    Examples: "what can you do?", "how does this work?", "help me understand"
 
 Query: "{query}"
+
+IMPORTANT: Analytics queries asking "which", "what", "how many", "most", "highest", "average" are ALWAYS "monitoring_details" because they retrieve existing data.
 
 Focus on the ACTION: Is the user asking to RETRIEVE existing data or CREATE something new?
 

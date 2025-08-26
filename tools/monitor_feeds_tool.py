@@ -244,14 +244,16 @@ async def query_monitor_feeds_dynamic(user_query: str) -> str:
                 "is_enabled": str(monitor['is_enabled']) if monitor['is_enabled'] is not None else None
             })
         
-        # Return enhanced response with records and metadata
+        # Return enhanced response with records, metadata, and generated SQL
         response_data = {
             "records": records,
             "query_description": query_description,
             "total_count": len(records),
+            "sql_query": final_query,  # Include the generated SQL
             "response_metadata": {
                 "table_name": "monitored_feeds",
-                "query_type": "monitor_configuration"
+                "query_type": "monitor_configuration",
+                "sql_generated": True
             }
         }
         

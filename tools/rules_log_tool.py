@@ -282,14 +282,16 @@ async def query_monitor_rules_logs_dynamic(user_query: str) -> str:
                 "app_incident_id": str(log['app_incident_id']) if log['app_incident_id'] is not None else None
             })
         
-        # Return enhanced response with records and metadata
+        # Return enhanced response with records, metadata, and generated SQL
         response_data = {
             "records": records,
             "query_description": query_description,
             "total_count": len(records),
+            "sql_query": final_query,  # Include the generated SQL
             "response_metadata": {
                 "table_name": "monitor_rules_logs",
-                "query_type": "historical_events"
+                "query_type": "historical_events",
+                "sql_generated": True
             }
         }
         

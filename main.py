@@ -293,55 +293,75 @@ async def query_data(request: QueryRequest):
             
             agent_response = await query_with_agent(request.query)
             
-            try:
-                json_data = json.loads(agent_response)
-                
-                # Extract records and metadata from enhanced tool response
-                if isinstance(json_data, dict) and 'records' in json_data:
-                    records = json_data.get('records', [])
-                    query_description = json_data.get('query_description', 'monitoring data')
-                    metadata = json_data.get('response_metadata', {})
-                else:
-                    # Fallback for old format
-                    records = json_data if isinstance(json_data, list) else []
-                    query_description = 'monitoring data'
-                    metadata = {}
-                
-                # Detect what type of response the user wants
-                response_type = await detect_response_type(request.query, records)
-                
-                # Format response based on detected type
-                if response_type == "CHART":
-                    formatted_data = format_chart_response(records, query_description)
-                    return JSONResponse(content={
-                        "type": "chart",
-                        "response_type": "chart",
-                        "data": formatted_data,
-                        "metadata": metadata
-                    })
-                elif response_type == "TEXT":
-                    formatted_data = format_text_response(records, query_description)
+            # Handle both string and dict responses
+            if isinstance(agent_response, dict):
+                # Analytics tool returns dict directly
+                json_data = agent_response
+            else:
+                # Other tools return string that needs parsing
+                try:
+                    json_data = json.loads(agent_response)
+                except json.JSONDecodeError:
                     return JSONResponse(content={
                         "type": "text",
-                        "response_type": "summary",
-                        "data": formatted_data,
-                        "metadata": metadata
+                        "response_type": "error",
+                        "data": {"content": agent_response}
                     })
-                else:  # TABLE (default)
-                    return JSONResponse(content={
-                        "type": "records",
-                        "response_type": "table",
-                        "data": records,
-                        "query_description": query_description,
-                        "total_count": len(records),
-                        "metadata": metadata
-                    })
-                    
-            except json.JSONDecodeError:
+            
+            # Extract records and metadata from enhanced tool response
+            if isinstance(json_data, dict) and 'records' in json_data:
+                records = json_data.get('records', [])
+                query_description = json_data.get('query_description', 'monitoring data')
+                metadata = json_data.get('response_metadata', {})
+                # Extract SQL if available (analytics tool)
+                generated_sql = json_data.get('sql_query', None)
+            else:
+                # Fallback for old format
+                records = json_data if isinstance(json_data, list) else []
+                query_description = 'monitoring data'
+                metadata = {}
+                generated_sql = None
+            
+            # Detect what type of response the user wants
+            response_type = await detect_response_type(request.query, records)
+            
+            # Prepare common response fields
+            common_fields = {
+                "query_description": query_description,
+                "total_count": len(records),
+                "metadata": metadata
+            }
+            
+            # Add SQL information if available
+            if generated_sql:
+                common_fields["generated_sql"] = generated_sql
+                common_fields["sql_available"] = True
+            else:
+                common_fields["sql_available"] = False
+            
+            # Format response based on detected type
+            if response_type == "CHART":
+                formatted_data = format_chart_response(records, query_description)
+                return JSONResponse(content={
+                    "type": "chart",
+                    "response_type": "chart",
+                    "data": formatted_data,
+                    **common_fields
+                })
+            elif response_type == "TEXT":
+                formatted_data = format_text_response(records, query_description)
                 return JSONResponse(content={
                     "type": "text",
-                    "response_type": "error",
-                    "data": {"content": agent_response}
+                    "response_type": "summary",
+                    "data": formatted_data,
+                    **common_fields
+                })
+            else:  # TABLE (default)
+                return JSONResponse(content={
+                    "type": "records",
+                    "response_type": "table",
+                    "data": records,
+                    **common_fields
                 })
         
         elif intent == "create_rule":
@@ -354,12 +374,11 @@ async def query_data(request: QueryRequest):
             })
         
         else:  # generic_question
+            from config import GENERIC_RESPONSE
             return JSONResponse(content={
                 "type": "text", 
                 "response_type": "help",
-                "data": {
-                    "content": f"I can help you with monitoring rule queries, violations, and creating new rules. Query: '{request.query}'"
-                }
+                "data": GENERIC_RESPONSE
             })
             
     except Exception as e:
@@ -386,6 +405,53 @@ async def test_agent():
             return {"status": "error", "message": "Tool selector setup failed"}
     except Exception as e:
         return {"status": "error", "message": f"Tool selector test failed: {str(e)}"}
+
+@app.post("/debug-query")
+async def debug_query(request: QueryRequest):
+    """Debug endpoint to see what SQL is generated without full processing."""
+    try:
+        print(f"🔍 Debug query: '{request.query}'")
+        
+        # Get the raw agent response
+        agent_response = await query_with_agent(request.query)
+        
+        if isinstance(agent_response, dict):
+            # Analytics tool response
+            return {
+                "query": request.query,
+                "tool_used": "analytics_tool",
+                "generated_sql": agent_response.get("sql_query"),
+                "query_description": agent_response.get("query_description"),
+                "records_count": len(agent_response.get("records", [])),
+                "full_response": agent_response
+            }
+        else:
+            # Other tools response (string)
+            try:
+                parsed_response = json.loads(agent_response)
+                return {
+                    "query": request.query,
+                    "tool_used": "other_tool",
+                    "generated_sql": parsed_response.get("sql_query"),
+                    "query_description": parsed_response.get("query_description"),
+                    "records_count": len(parsed_response.get("records", [])),
+                    "raw_response": agent_response,
+                    "parsed_response": parsed_response
+                }
+            except json.JSONDecodeError:
+                return {
+                    "query": request.query,
+                    "tool_used": "unknown",
+                    "raw_response": agent_response,
+                    "error": "Failed to parse response"
+                }
+                
+    except Exception as e:
+        return {
+            "query": request.query,
+            "error": str(e),
+            "message": "Debug query failed"
+        }
 
 if __name__ == "__main__":
     import uvicorn

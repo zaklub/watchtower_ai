@@ -246,14 +246,16 @@ async def query_monitor_rules_dynamic(user_query: str) -> str:
                 "is_enabled": str(rule['is_enabled']) if rule['is_enabled'] is not None else None
             })
         
-        # Return enhanced response with records and metadata
+        # Return enhanced response with records, metadata, and generated SQL
         response_data = {
             "records": records,
             "query_description": query_description,
             "total_count": len(records),
+            "sql_query": final_query,  # Include the generated SQL
             "response_metadata": {
                 "table_name": "monitor_rules",
-                "query_type": "rule_status"
+                "query_type": "rule_status",
+                "sql_generated": True
             }
         }
         
