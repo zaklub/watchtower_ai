@@ -395,6 +395,11 @@ async def query_data(request: QueryRequest):
             }
         )
 
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Docker and load balancers"""
+    return {"status": "healthy", "service": "watchtower-ai", "timestamp": "2024-01-01T00:00:00Z"}
+
 @app.get("/test-agent")
 async def test_agent():
     """Test the simple tool selector setup and tool access"""
