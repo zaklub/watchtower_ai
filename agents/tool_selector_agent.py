@@ -7,6 +7,7 @@ from ollama_client.ollama_client import OllamaClient
 from tools.rules_tool import query_monitor_rules_dynamic
 from tools.rules_log_tool import query_monitor_rules_logs_dynamic
 from tools.monitor_feeds_tool import query_monitor_feeds_dynamic
+from tools.monitor_facts_tool import query_monitor_facts_dynamic
 from tools.analytics_tool import execute_analytics_query
 
 
@@ -32,11 +33,21 @@ CURRENT_RULES: Use for queries about the current state of monitoring rules
 - Finding rules by name, ID, or monitor ID
 - Examples: "show violated rules", "current rules", "active rules", "rule status"
 
-HISTORICAL_LOGS: Use for queries about past events and audit history
-- Historical events, audit trails, past incidents
-- Alert history and notifications that were sent
-- Rollback events and remediation actions
-- Examples: "show logs", "audit history", "past violations", "alert history", "rollback events"
+HISTORICAL_LOGS: Use for queries about RULE-RELATED events and audit history
+- Rule violation events and alerts
+- Rule execution logs and audit trails
+- Alert notifications that were sent for rule violations
+- Rollback events when rules were fixed after violations
+- RULE VIOLATIONS and ALERTS (not performance events)
+- NOTIFICATION CHANNELS (EMAIL, SLACK, SMS, PAGERDUTY, OPSGENIE) - these are about rule violation alerts
+- Examples: "show logs", "audit history", "past violations", "alert history", "rollback events", "violation events", "rule violation logs", "EMAIL notifications", "SLACK alerts", "channel EMAIL", "notifications via SMS"
+
+MONITOR_FACTS: Use for queries about monitor performance metrics and measured values
+- Actual measured values, event counts, and throughput data
+- Performance data over time ranges
+- Monitor performance trends and analysis
+- MONITOR EVENTS and EVENT DATA (not rule violations)
+- Examples: "show performance data", "monitor throughput", "event counts", "performance trends", "monitor events", "event data", "events in last X days", "monitor events from last week"
 
 ANALYTICS: Use for complex queries that require multiple tables, aggregations, or comparisons
 - Queries with "most", "highest", "average", "count", "group by"
@@ -47,15 +58,29 @@ ANALYTICS: Use for complex queries that require multiple tables, aggregations, o
 Key distinction:
 - "monitors" or "monitor configuration" = MONITOR_FEEDS
 - "violated rules" = CURRENT_RULES (current state)
-- "violation events" or "violation logs" = HISTORICAL_LOGS (past events)
+- "rule violation events", "violation logs", "rule logs" = HISTORICAL_LOGS (rule-related events)
+- "channels" (EMAIL, SLACK, SMS, PAGERDUTY, OPSGENIE) = HISTORICAL_LOGS (rule violation notifications)
+- "monitor events", "event data", "performance data", "throughput", "event counts" = MONITOR_FACTS
 - "most", "highest", "average", "count", "group by" = ANALYTICS
 
+CRITICAL: 
+- "monitor events" = MONITOR_FACTS (actual measured events/performance data)
+- "rule violation events" = HISTORICAL_LOGS (rule violations and alerts)
+- "channels" (EMAIL, SLACK, SMS, PAGERDUTY, OPSGENIE) = HISTORICAL_LOGS (rule violation notifications)
+- "events" alone is ambiguous - look for context words like "monitor", "rule", "violation"
+
 User Query: "{user_query}"
+
+IMPORTANT EXAMPLES:
+- "Plot me a chart for Channel EMAIL" → HISTORICAL_LOGS (channels are about rule violation notifications)
+- "Show me EMAIL notifications" → HISTORICAL_LOGS (channels are about rule violation notifications)
+- "SLACK alerts for last week" → HISTORICAL_LOGS (channels are about rule violation notifications)
 
 Respond with EXACTLY one of these options:
 MONITOR_FEEDS
 CURRENT_RULES
 HISTORICAL_LOGS
+MONITOR_FACTS
 ANALYTICS
 
 Tool choice:"""
@@ -79,6 +104,10 @@ Tool choice:"""
         elif "HISTORICAL_LOGS" in tool_choice:
             print(f"📜 Executing historical logs tool for: '{user_query}'")
             result = await query_monitor_rules_logs_dynamic.ainvoke({"user_query": user_query})
+            return result
+        elif "MONITOR_FACTS" in tool_choice:
+            print(f"📊 Executing monitor facts tool for: '{user_query}'")
+            result = await query_monitor_facts_dynamic.ainvoke({"user_query": user_query})
             return result
         elif "ANALYTICS" in tool_choice:
             print(f"🧠 Executing analytics tool for: '{user_query}'")
@@ -108,6 +137,7 @@ def test_agent_connection() -> bool:
         print("✅ Monitor feeds tool imported successfully")
         print("✅ Rules tool imported successfully")
         print("✅ Logs tool imported successfully")
+        print("✅ Monitor facts tool imported successfully")
         
         try:
             monitor_result = query_monitor_feeds_dynamic.ainvoke({"user_query": "test query"})
@@ -126,6 +156,12 @@ def test_agent_connection() -> bool:
             print("✅ Logs tool can be invoked")
         except Exception as e:
             print(f"⚠️ Logs tool test: {e}")
+            
+        try:
+            facts_result = query_monitor_facts_dynamic.ainvoke({"user_query": "test query"})
+            print("✅ Monitor facts tool can be invoked")
+        except Exception as e:
+            print(f"⚠️ Monitor facts tool test: {e}")
         
         print("✅ Simple tool selector ready")
         return True

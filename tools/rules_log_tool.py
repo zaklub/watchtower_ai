@@ -18,6 +18,8 @@ async def generate_sql_where_clause(user_query: str) -> tuple[list[str], str]:
         
         system_prompt = """You are a SQL expert specializing in database queries for monitoring and logging systems.
 
+IMPORTANT: You are working with POSTGRESQL database. Use PostgreSQL syntax.
+
 Given a user's natural language query, generate appropriate SQL WHERE clause conditions for the monitor_rules_logs table.
 
 Table schema:

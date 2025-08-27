@@ -33,7 +33,7 @@ class AnalyticsTool:
                     "measure_field_path": "Field path for measurement",
                     "is_enabled": "TRUE/FALSE - whether monitor is active"
                 },
-                "relationships": ["monitor_rules", "monitor_rules_logs"]
+                "relationships": ["monitor_rules", "monitor_rules_logs", "monitored_facts"]
             },
             "monitor_rules": {
                 "description": "Current monitoring rules and their status",
@@ -69,19 +69,34 @@ class AnalyticsTool:
                     "app_incident_id": "External incident identifier"
                 },
                 "relationships": ["monitor_rules", "monitored_feeds"]
+            },
+            "monitored_facts": {
+                "description": "Actual measured values and event counts for monitors over time ranges",
+                "columns": {
+                    "fact_id": "Primary key, unique fact identifier (character varying 50)",
+                    "monitor_id": "Foreign key to monitored_feeds.monitor_id (numeric)",
+                    "start_time": "Start time of the collection range (timestamp)",
+                    "end_time": "End time of the collection range (timestamp)",
+                    "cummulative_measure": "Cumulative count or sum value (numeric)",
+                    "samples": "Number of samples/events for this monitor (character varying 32)"
+                },
+                "relationships": ["monitored_feeds"]
             }
         }
         
         self.relationships = {
             "monitored_feeds → monitor_rules": "monitored_feeds.monitor_id = monitor_rules.monitor_id",
             "monitor_rules → monitor_rules_logs": "monitor_rules.rule_id = monitor_rules_logs.rule_id",
-            "monitored_feeds → monitor_rules_logs": "monitored_feeds.monitor_id = monitor_rules.monitor_id AND monitor_rules.rule_id = monitor_rules_logs.rule_id"
+            "monitored_feeds → monitor_rules_logs": "monitored_feeds.monitor_id = monitor_rules.monitor_id AND monitor_rules.rule_id = monitor_rules_logs.rule_id",
+            "monitored_feeds → monitored_facts": "monitored_feeds.monitor_id = monitored_facts.monitor_id"
         }
     
     async def generate_complex_sql(self, user_query: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
         """Generate complex SQL for analytics queries using LLM."""
         try:
             system_prompt = f"""You are an expert SQL analyst specializing in complex multi-table queries with JOINs, GROUP BY, aggregations, and subqueries.
+
+IMPORTANT: You are working with POSTGRESQL database. Use PostgreSQL syntax, NOT MySQL syntax.
 
 You have access to these tables and their relationships:
 
@@ -113,6 +128,14 @@ IMPORTANT RULES:
 3. No trailing commas
 4. No extra text before or after the JSON
 5. Ensure all quotes are properly escaped in SQL
+6. Use POSTGRESQL syntax (NOT MySQL)
+
+POSTGRESQL SPECIFIC SYNTAX EXAMPLES:
+- Date arithmetic: NOW() - INTERVAL '30 days' (NOT DATE_SUB)
+- String concatenation: str1 \|\| str2 (NOT CONCAT)
+- Current date: CURRENT_DATE or NOW()
+- Date extraction: EXTRACT(DAY FROM timestamp)
+- Interval: INTERVAL '1 month', INTERVAL '7 days'
 
 Examples of complex queries you should handle:
 - "Which monitor has the most rules?" → JOIN + GROUP BY + COUNT + ORDER BY + LIMIT
@@ -120,6 +143,10 @@ Examples of complex queries you should handle:
 - "Monitors with more than 5 rules" → JOIN + GROUP BY + COUNT + HAVING
 - "Average rules per monitor type" → JOIN + GROUP BY + AVG
 - "Top 3 most problematic monitors" → JOIN + GROUP BY + COUNT + ORDER BY + LIMIT
+- "Show me monitor performance over time" → JOIN + monitored_facts + time series analysis
+- "Which monitors have the highest event counts?" → JOIN + monitored_facts + GROUP BY + ORDER BY
+- "Monitor throughput trends by hour" → JOIN + monitored_facts + time grouping + aggregations
+- "Compare monitor performance across different time periods" → JOIN + monitored_facts + date comparisons
 
 User Query: """
 
@@ -239,6 +266,37 @@ User Query: """
             description = f"Monitors with more than {threshold} rules"
             query_type = "analytics"
             
+        elif "performance" in query_lower or "throughput" in query_lower or "events" in query_lower:
+            # Monitor performance/throughput queries
+            sql = """
+                SELECT m.monitor_system_name, 
+                       AVG(f.cummulative_measure) as avg_measure,
+                       SUM(f.samples::numeric) as total_samples,
+                       COUNT(f.fact_id) as fact_count
+                FROM monitored_feeds m 
+                JOIN monitored_facts f ON m.monitor_id = f.monitor_id 
+                GROUP BY m.monitor_id, m.monitor_system_name 
+                ORDER BY avg_measure DESC
+            """
+            description = "Monitor performance and throughput analysis"
+            query_type = "analytics"
+            
+        elif "time" in query_lower and ("trend" in query_lower or "over" in query_lower):
+            # Time-based trend queries
+            sql = """
+                SELECT m.monitor_system_name,
+                       DATE_TRUNC('hour', f.start_time) as hour_bucket,
+                       AVG(f.cummulative_measure) as avg_measure,
+                       COUNT(f.fact_id) as fact_count
+                FROM monitored_feeds m 
+                JOIN monitored_facts f ON m.monitor_id = f.monitor_id 
+                WHERE f.start_time >= NOW() - INTERVAL '24 hours'
+                GROUP BY m.monitor_id, m.monitor_system_name, DATE_TRUNC('hour', f.start_time)
+                ORDER BY m.monitor_system_name, hour_bucket
+            """
+            description = "Monitor performance trends over time"
+            query_type = "trend"
+            
         else:
             # Generic fallback
             sql = """
@@ -331,6 +389,8 @@ User Query: """
             tables.append("monitor_rules")
         if "MONITOR_RULES_LOGS" in sql_upper:
             tables.append("monitor_rules_logs")
+        if "MONITORED_FACTS" in sql_upper:
+            tables.append("monitored_facts")
         
         return tables
     
@@ -341,7 +401,10 @@ User Query: """
             "Show me monitors with more than 3 rules",
             "What's the violation rate by monitor priority?",
             "Which monitors are most active?",
-            "Show me the top 5 monitors by rule count"
+            "Show me the top 5 monitors by rule count",
+            "Show me monitor performance over time",
+            "Which monitors have the highest event counts?",
+            "Monitor throughput trends by hour"
         ]
         
         results = {}

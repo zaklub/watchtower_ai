@@ -128,62 +128,44 @@ Response type:"""
 
 
 def format_chart_response(data_records: list, query_description: str) -> dict:
-    """Format data for chart visualization."""
+    """Format data for line chart visualization."""
     if not data_records:
         return {"chart_type": "empty", "message": "No data available for charting"}
     
-    # Determine chart type based on data structure
+    # Always use line chart for simplicity
     sample_record = data_records[0]
     
     # Check if we have timestamp data for time series
     has_timestamp = any('timestamp' in key.lower() for key in sample_record.keys())
     
-    # Check if we have numeric data for bar/pie charts
+    # Check if we have numeric data for y-axis
     has_numeric = any(isinstance(value, (int, float)) and value is not None for value in sample_record.values())
     
-    # Check if we have categorical data
-    has_categorical = any(isinstance(value, str) and value in ['TRUE', 'FALSE', 'HIGH', 'MEDIUM', 'LOW', 'CRITICAL', 'EMAIL', 'SLACK', 'SMS'] for value in sample_record.values())
-    
     chart_data = {
-        "chart_type": "unknown",
+        "chart_type": "line_chart",
         "title": f"{query_description.title()}",
         "data": data_records,
         "total_records": len(data_records),
-        "chart_config": {}
+        "chart_config": {
+            "chart_style": "time_series",
+            "x_axis_label": "Time" if has_timestamp else "Index",
+            "y_axis_label": "Value" if has_numeric else "Count"
+        }
     }
     
+    # Set appropriate axes based on data structure
     if has_timestamp and has_numeric:
-        chart_data["chart_type"] = "line_chart"
+        chart_data["x_axis"] = "timestamp"
+        chart_data["y_axis"] = "value"
+    elif has_timestamp:
         chart_data["x_axis"] = "timestamp"
         chart_data["y_axis"] = "count"
-        chart_data["chart_config"].update({
-            "x_axis_label": "Time",
-            "y_axis_label": "Count",
-            "chart_style": "time_series"
-        })
-    elif has_categorical and has_numeric:
-        chart_data["chart_type"] = "bar_chart"
-        chart_data["x_axis"] = "category"
-        chart_data["y_axis"] = "count"
-        chart_data["chart_config"].update({
-            "x_axis_label": "Category",
-            "y_axis_label": "Count",
-            "chart_style": "categorical"
-        })
-    elif has_categorical:
-        chart_data["chart_type"] = "pie_chart"
-        chart_data["dimension"] = "category"
-        chart_data["chart_config"].update({
-            "chart_style": "distribution",
-            "show_percentages": True
-        })
+    elif has_numeric:
+        chart_data["x_axis"] = "index"
+        chart_data["y_axis"] = "value"
     else:
-        chart_data["chart_type"] = "table"
-        chart_data["chart_config"].update({
-            "chart_style": "tabular",
-            "sortable": True,
-            "searchable": True
-        })
+        chart_data["x_axis"] = "index"
+        chart_data["y_axis"] = "count"
     
     # Add specific chart configurations based on data content
     if 'priority' in sample_record:
@@ -276,10 +258,7 @@ async def root():
     """Root endpoint - health check"""
     return {"message": "Watchtower AI API is running!", "status": "healthy"}
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "service": "watchtower-ai"}
+
 
 @app.post("/query")
 async def query_data(request: QueryRequest):
