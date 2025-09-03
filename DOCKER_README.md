@@ -1,6 +1,13 @@
 # 🐳 Watchtower AI - Docker Guide
 
-This guide explains how to containerize and run your Watchtower AI application using Docker.
+This guide explains how to containerize and run your Watchtower AI application using Docker with the **NEW Two-Level Classification System**.
+
+## 🆕 What's New in v2.0.0
+
+- **🔍 Two-Level Classification**: First classifies the group, then determines the specific table or analytics within that group
+- **🤖 Enhanced Tool Selection**: More granular tool selection based on the two-level classification
+- **📊 Better Response Handling**: Improved chart, text, and table response formatting
+- **🧠 Analytics Integration**: Better integration with analytics tools for complex queries
 
 ## 📋 Prerequisites
 
@@ -48,14 +55,14 @@ docker-compose down
 
 ```bash
 # Run the container
-docker run -d --name watchtower-ai -p 8000:8000 watchtower-ai:latest
+docker run -d --name watchtower-ai-new-architecture -p 8000:8000 watchtower-ai:latest
 
 # View logs
-docker logs -f watchtower-ai
+docker logs -f watchtower-ai-new-architecture
 
 # Stop the container
-docker stop watchtower-ai
-docker rm watchtower-ai
+docker stop watchtower-ai-new-architecture
+docker rm watchtower-ai-new-architecture
 ```
 
 ## 🌐 Accessing the Application
@@ -75,6 +82,7 @@ The following environment variables can be set in `docker-compose.yml`:
 environment:
   - PYTHONPATH=/app
   - PYTHONUNBUFFERED=1
+  - WATCHTOWER_ARCHITECTURE=new_two_level_classification
   # Add your database connection strings here
   - DATABASE_URL=postgresql://user:pass@host:port/db
 ```
@@ -120,13 +128,13 @@ The Docker container includes health checks:
 
 ```bash
 # Docker Compose logs
-docker-compose logs -f watchtower-ai
+docker-compose logs -f watchtower-ai-new-architecture
 
 # Direct Docker logs
-docker logs -f watchtower-ai
+docker logs -f watchtower-ai-new-architecture
 
 # Last 100 lines
-docker logs --tail 100 watchtower-ai
+docker logs --tail 100 watchtower-ai-new-architecture
 ```
 
 ### Debugging
@@ -136,7 +144,7 @@ docker logs --tail 100 watchtower-ai
 docker run -it --rm -p 8000:8000 watchtower-ai:latest /bin/bash
 
 # Execute commands in running container
-docker exec -it watchtower-ai /bin/bash
+docker exec -it watchtower-ai-new-architecture /bin/bash
 ```
 
 ## 🔄 Development Workflow
@@ -190,14 +198,23 @@ Create different docker-compose files:
 
 ```
 watchtower_ai/
-├── Dockerfile              # Main Docker image definition
-├── docker-compose.yml      # Docker Compose configuration
+├── Dockerfile              # Main Docker image definition (Updated for v2.0.0)
+├── docker-compose.yml      # Docker Compose configuration (Updated for v2.0.0)
 ├── .dockerignore          # Files to exclude from Docker build
 ├── build.sh               # Linux/Mac build script
 ├── build.bat              # Windows build script
 ├── requirements.txt       # Python dependencies
-├── main.py               # FastAPI application
-└── ...                   # Other application files
+├── main.py               # FastAPI application (NEW Two-Level Classification)
+├── agents/               # Agent implementations
+│   └── new_tool_selector_agent.py  # NEW Two-Level Tool Selector
+├── intent/               # Intent classification
+│   ├── classify_group.py           # NEW First-level classification
+│   └── classify_table_within_group.py  # NEW Second-level classification
+└── tools/                # Tool implementations (organized by group)
+    ├── monitor_group/    # Monitor-related tools
+    ├── facts_group/      # Facts-related tools
+    ├── rules_group/      # Rules-related tools
+    └── actions_group/    # Actions-related tools
 ```
 
 ## 🔒 Security Considerations
@@ -206,6 +223,7 @@ watchtower_ai/
 - Health checks prevent unhealthy containers from receiving traffic
 - Config files are mounted as read-only
 - System packages are cleaned up after installation
+- Unnecessary files (__pycache__, .git, venv) are removed during build
 
 ## 📚 Additional Resources
 
@@ -221,3 +239,15 @@ If you encounter issues:
 2. Verify Docker is running: `docker info`
 3. Check container status: `docker ps -a`
 4. Ensure all required ports are available
+5. Ensure all required ports are available
+
+## 🧪 Testing the New Architecture
+
+The new two-level classification system can be tested using:
+
+```bash
+# Test a query with the new system
+curl -X POST http://localhost:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Show me all monitors"}'
+```

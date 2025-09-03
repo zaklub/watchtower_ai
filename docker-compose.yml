@@ -2,18 +2,25 @@ version: '3.8'
 
 services:
   watchtower-ai:
-    build: .
-    container_name: watchtower-ai
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: watchtower-ai-v2
     ports:
       - "8000:8000"
     environment:
       - PYTHONPATH=/app
       - PYTHONUNBUFFERED=1
+      - PYTHONHASHSEED=random
+      - WATCHTOWER_ARCHITECTURE=new_two_level_classification
+      - WATCHTOWER_VERSION=2.0.0
     volumes:
       # Mount config files for easy updates
       - ./config.py:/app/config.py:ro
-      # Mount logs directory if you want persistent logs
+      # Mount logs directory for persistent logs
       - ./logs:/app/logs
+      # Mount database connection config if needed
+      - ./database:/app/database:ro
     networks:
       - watchtower-network
     restart: unless-stopped
@@ -23,10 +30,22 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    labels:
+      - "com.watchtower.description=Watchtower AI with NEW Two-Level Classification System"
+      - "com.watchtower.version=2.0.0"
+      - "com.watchtower.architecture=new_two_level_classification"
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
 
   # Optional: PostgreSQL database (if you want to run locally)
   # postgres:
-  #   image: postgres:15
+  #   image: postgres:15-alpine
   #   container_name: watchtower-postgres
   #   environment:
   #     POSTGRES_DB: watchtower
@@ -39,6 +58,11 @@ services:
   #   networks:
   #     - watchtower-network
   #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         memory: 1G
+  #         cpus: '0.5'
 
 networks:
   watchtower-network:

@@ -79,7 +79,8 @@ class OllamaClient:
                     
         except Exception as e:
             print(f"💥 Exception calling Ollama: {type(e).__name__}: {e}")
-            return None
+            # Re-raise connection errors so they can be handled by retry logic
+            raise
     
     async def health_check(self) -> bool:
         """

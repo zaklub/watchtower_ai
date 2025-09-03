@@ -394,47 +394,8 @@ User Query: """
         
         return tables
     
-    async def test_complex_queries(self) -> Dict[str, Any]:
-        """Test the analytics tool with various complex queries."""
-        test_queries = [
-            "Which monitor has the most rules?",
-            "Show me monitors with more than 3 rules",
-            "What's the violation rate by monitor priority?",
-            "Which monitors are most active?",
-            "Show me the top 5 monitors by rule count",
-            "Show me monitor performance over time",
-            "Which monitors have the highest event counts?",
-            "Monitor throughput trends by hour"
-        ]
-        
-        results = {}
-        for query in test_queries:
-            print(f"\n🧪 Testing: {query}")
-            result = await self.execute_analytics_query(query)
-            results[query] = result
-        
-        return results
-
-
 # Convenience function for easy integration
 async def execute_analytics_query(user_query: str) -> Dict[str, Any]:
     """Execute an analytics query using the analytics tool."""
     tool = AnalyticsTool()
     return await tool.execute_analytics_query(user_query)
-
-
-# Test function
-async def test_analytics_tool():
-    """Test the analytics tool functionality."""
-    print("🧪 Testing Analytics Tool")
-    print("=" * 50)
-    
-    tool = AnalyticsTool()
-    test_results = await tool.test_complex_queries()
-    
-    print("\n🎉 Analytics Tool Testing Complete!")
-    return test_results
-
-
-if __name__ == "__main__":
-    asyncio.run(test_analytics_tool())
