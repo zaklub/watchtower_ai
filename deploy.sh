@@ -115,7 +115,7 @@ echo ""
 
 # Show running containers
 print_status "Running containers:"
-docker-compose ps
+docker compose ps
 
 echo ""
 print_status "Deployment completed successfully!"
