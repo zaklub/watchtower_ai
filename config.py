@@ -4,18 +4,18 @@ Configuration file for Watchtower AI API
 
 # Ollama Configuration
 OLLAMA_CONFIG = {
-    "base_url": "http://localhost:11434",
+    "base_url": "http://172.20.150.10:11434",
     "model": "llama3:8b",  # Change this to your preferred model
     "timeout": 30.0
 }
 
 # Database Configuration
 DATABASE_CONFIG = {
-    "host": "localhost",
+    "host": "wt-postgres",
     "port": 5432,
-    "dbname": "businessinsight",
+    "dbname": "wtdb",
     "user": "audituser",
-    "password": "manage"
+    "password": "manageaudit"
 }
 
 # API Configuration

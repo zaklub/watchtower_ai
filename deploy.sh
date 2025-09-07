@@ -44,7 +44,7 @@ fi
 print_status "Docker is running"
 
 # Check if docker-compose is available
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker compose &> /dev/null; then
     print_error "docker-compose is not installed. Please install it and try again."
     exit 1
 fi
@@ -59,7 +59,7 @@ fi
 
 # Stop and remove existing containers
 print_status "Stopping existing containers..."
-docker-compose down --remove-orphans 2>/dev/null || true
+docker compose down --remove-orphans 2>/dev/null || true
 
 # Remove old images to free up space
 print_status "Cleaning up old images..."
@@ -67,18 +67,18 @@ docker image prune -f > /dev/null 2>&1 || true
 
 # Build the new image
 print_status "Building Docker image..."
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # Start the services
 print_status "Starting services..."
-docker-compose up -d
+docker compose up -d
 
 # Wait for the service to be healthy
 print_status "Waiting for service to be healthy..."
 timeout=120
 counter=0
 while [ $counter -lt $timeout ]; do
-    if docker-compose ps | grep -q "healthy"; then
+    if docker compose ps | grep -q "healthy"; then
         print_status "Service is healthy!"
         break
     fi
@@ -89,7 +89,7 @@ done
 
 if [ $counter -ge $timeout ]; then
     print_warning "Service health check timeout. Checking logs..."
-    docker-compose logs --tail=20
+    docker compose logs --tail=20
     exit 1
 fi
 

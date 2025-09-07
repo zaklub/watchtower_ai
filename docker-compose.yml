@@ -1,11 +1,11 @@
-version: '3.8'
+#version: '3.8'
 
 services:
   watchtower-ai:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
-    container_name: watchtower-ai-v2
+    container_name: watchtower-ai
     ports:
       - "8000:8000"
     environment:
@@ -22,7 +22,7 @@ services:
       # Mount database connection config if needed
       - ./database:/app/database:ro
     networks:
-      - watchtower-network
+      - watch-tower-setup_wt_network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -43,30 +43,7 @@ services:
           memory: 512M
           cpus: '0.5'
 
-  # Optional: PostgreSQL database (if you want to run locally)
-  # postgres:
-  #   image: postgres:15-alpine
-  #   container_name: watchtower-postgres
-  #   environment:
-  #     POSTGRES_DB: watchtower
-  #     POSTGRES_USER: watchtower
-  #     POSTGRES_PASSWORD: watchtower123
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   networks:
-  #     - watchtower-network
-  #   restart: unless-stopped
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 1G
-  #         cpus: '0.5'
 
 networks:
-  watchtower-network:
-    driver: bridge
-
-# volumes:
-#   postgres_data:
+  watch-tower-setup_wt_network:
+    external: true
