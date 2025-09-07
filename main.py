@@ -5,10 +5,11 @@ Enhanced with NEW Two-Level Classification System
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import json
 
-from config import API_CONFIG
+from config import API_CONFIG, CORS_CONFIG
 from intent.classify_intent import classify_intent
 from agents.new_tool_selector_agent import query_with_agent
 from response_formatters import format_chart_response, format_text_response
@@ -18,6 +19,15 @@ app = FastAPI(
     title=API_CONFIG["title"],
     description=API_CONFIG["description"],
     version=API_CONFIG["version"]
+)
+
+# Add CORS middleware to ignore CORS restrictions
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_CONFIG["allow_origins"],
+    allow_credentials=CORS_CONFIG["allow_credentials"],
+    allow_methods=CORS_CONFIG["allow_methods"],
+    allow_headers=CORS_CONFIG["allow_headers"],
 )
 
 class QueryRequest(BaseModel):
@@ -183,6 +193,22 @@ async def query_data(request: QueryRequest):
 async def health_check():
     """Health check endpoint for Docker and load balancers"""
     return {"status": "healthy", "service": "watchtower-ai-new-classification", "timestamp": "2024-01-01T00:00:00Z"}
+
+# OPTIONS handlers for CORS preflight requests
+@app.options("/")
+async def options_root():
+    """Handle CORS preflight requests for root endpoint"""
+    return JSONResponse(content={}, status_code=200)
+
+@app.options("/query")
+async def options_query():
+    """Handle CORS preflight requests for query endpoint"""
+    return JSONResponse(content={}, status_code=200)
+
+@app.options("/health")
+async def options_health():
+    """Handle CORS preflight requests for health endpoint"""
+    return JSONResponse(content={}, status_code=200)
 
 if __name__ == "__main__":
     import uvicorn

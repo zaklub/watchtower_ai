@@ -27,10 +27,18 @@ API_CONFIG = {
     "port": 8000
 }
 
+# CORS Configuration
+CORS_CONFIG = {
+    "allow_origins": ["*"],  # Allow all origins - change to specific domains for production
+    "allow_credentials": True,
+    "allow_methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Specific methods instead of *
+    "allow_headers": ["*"]  # Allow all headers
+}
+
 # Intent Classification Keywords
 INTENT_KEYWORDS = {
     "create_rule": ['create', 'set', 'setup', 'configure', 'add', 'new', 'alert', 'watch'],
-    "monitoring_details": ['show', 'get', 'view', 'display', 'chart', 'report', 'violations', 'status', 'data', 'analytics', 'list', 'rules', 'monitor', 'most', 'highest', 'average', 'count', 'group by', 'which', 'what', 'how many', 'give me'],
+    "monitoring_details": ['show', 'get', 'view', 'display', 'chart', 'report', 'violations', 'status', 'data', 'analytics', 'list', 'rules', 'monitor', 'most', 'highest', 'average', 'count', 'group by', 'which', 'what', 'how many', 'give me', 'plot', 'graph', 'visualize', 'trend'],
     "chart": ['chart', 'graph', 'plot', 'trend', 'visual', 'show', 'display'],
     "table": ['table', 'list', 'breakdown', 'details', 'data', 'rows']
 }
