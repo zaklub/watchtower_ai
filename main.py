@@ -177,6 +177,15 @@ async def query_data(request: QueryRequest):
                 }
             })
         
+        elif intent == "database_schema":
+            return JSONResponse(content={
+                "type": "text",
+                "response_type": "error",
+                "data": {
+                    "content": "This is a monitoring system, not a database management system. I can help you with monitoring rules, violations, performance data, and alerts. Please ask about monitoring-related topics instead."
+                }
+            })
+        
         else:  # generic_question
             from config import GENERIC_RESPONSE
             return JSONResponse(content={

@@ -16,10 +16,11 @@ from ollama_client.ollama_client import OllamaClient
 
 async def classify_intent(query: str) -> str:
     """
-    Use Ollama to classify the intent of the query into one of three categories:
+    Use Ollama to classify the intent of the query into one of four categories:
     1. monitoring_details - Get monitoring data/reports
     2. create_rule - Create new monitoring rules/alerts  
     3. generic_question - General questions about capabilities
+    4. database_schema - Queries about database structure/tables/schema
     
     Args:
         query: The user's query string
@@ -58,7 +59,7 @@ async def classify_intent(query: str) -> str:
                 print(f"🔧 Processed intent: '{intent}'")
                 
                 # Validate intent
-                valid_intents = ["monitoring_details", "create_rule", "generic_question"]
+                valid_intents = ["monitoring_details", "create_rule", "generic_question", "database_schema"]
                 if intent in valid_intents:
                     attempt_duration = time.time() - attempt_start
                     total_duration = time.time() - start_time
