@@ -78,6 +78,21 @@ async def query_data(request: QueryRequest):
                 metadata = {}
                 generated_sql = None
             
+            # Check if no records were returned from SQL query
+            if not records or len(records) == 0:
+                return JSONResponse(content={
+                    "type": "text",
+                    "response_type": "no_results",
+                    "data": {
+                        "content": f"No records found matching your query: '{request.query}'. Please try adjusting your search criteria or check if the data exists in the system."
+                    },
+                    "query_description": query_description,
+                    "total_count": 0,
+                    "metadata": metadata,
+                    "generated_sql": generated_sql if generated_sql else None,
+                    "sql_available": bool(generated_sql)
+                })
+            
             # Detect what type of response the user wants
             try:
                 response_type = await detect_response_type(request.query, records)
@@ -85,14 +100,12 @@ async def query_data(request: QueryRequest):
                 # Handle specific errors from response type detection
                 error_msg = str(e)
                 return JSONResponse(
-                    status_code=503 if "connection" in error_msg.lower() else 400,
+                    status_code=200,  # Changed to 200 for text response
                     content={
-                        "type": "error",
-                        "response_type": "detection_failed",
+                        "type": "text",
+                        "response_type": "connection_error",
                         "data": {
-                            "error": error_msg,
-                            "message": "Failed to detect response type",
-                            "details": "Ollama service unavailable" if "connection" in error_msg.lower() else "Invalid response from LLM"
+                            "content": f"Unable to process your query due to a connection issue: {error_msg}. The AI service is currently unavailable. Please try again later or contact support if the problem persists."
                         }
                     }
                 )
@@ -176,15 +189,12 @@ async def query_data(request: QueryRequest):
         error_msg = str(e)
         error_type = type(e).__name__
         return JSONResponse(
-            status_code=500,
+            status_code=200,  # Changed to 200 for text response
             content={
-                "type": "error",
-                "response_type": "processing_error",
+                "type": "text",
+                "response_type": "error_message",
                 "data": {
-                    "error": error_msg,
-                    "error_type": error_type,
-                    "message": "Failed to process query",
-                    "details": "Unexpected error occurred during query processing"
+                    "content": f"Unable to process your query due to a {error_type}: {error_msg}. Please try again or contact support if the issue persists."
                 }
             }
         )
