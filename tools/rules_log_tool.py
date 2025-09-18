@@ -65,6 +65,8 @@ Examples:
 - "Show me logs for SAP monitor" → {"where_conditions": ["m.monitor_system_name ILIKE '%SAP%'"], "query_description": "logs for SAP monitor"}
 - "Show me violations for CPU monitor" → {"where_conditions": ["l.log_comment = 'COMMIT'", "m.monitor_system_name ILIKE '%CPU%'"], "query_description": "violations for CPU monitor"}
 - "Give me the list of all the Monitors for which the rules have failed in last 2 months" → {"where_conditions": ["l.log_comment = 'COMMIT'", "l.log_timestamp >= NOW() - INTERVAL '2 months'"], "query_description": "monitors with failed rules in last 2 months"}
+- "Plot me a Chart for all alerts" → {"where_conditions": ["l.log_comment = 'COMMIT'", "l.channel IS NOT NULL"], "query_description": "all alerts"}
+- "Give me All Alerts" → {"where_conditions": ["l.log_comment = 'COMMIT'", "l.channel IS NOT NULL"], "query_description": "all alerts"}
 
 Remember: Your response must be a COMPLETE JSON object. No partial responses.
 
@@ -170,6 +172,21 @@ def fallback_word_matching(user_query: str) -> Tuple[List[str], str]:
         'rollbacks': ('l.log_comment = \'ROLLBACK\'', 'rollback events'),
         'fixed': ('l.log_comment = \'ROLLBACK\'', 'rollback events')
     }
+    
+    # Alert-specific matching
+    alert_mappings = {
+        'alerts': ('l.log_comment = \'COMMIT\' AND l.channel IS NOT NULL', 'all alerts'),
+        'alert': ('l.log_comment = \'COMMIT\' AND l.channel IS NOT NULL', 'all alerts'),
+        'all alerts': ('l.log_comment = \'COMMIT\' AND l.channel IS NOT NULL', 'all alerts'),
+        'chart for all alerts': ('l.log_comment = \'COMMIT\' AND l.channel IS NOT NULL', 'all alerts'),
+        'plot alerts': ('l.log_comment = \'COMMIT\' AND l.channel IS NOT NULL', 'all alerts')
+    }
+    
+    # Check for alert-specific queries first
+    for keyword, (condition, description) in alert_mappings.items():
+        if keyword in query_lower:
+            where_conditions.append(condition)
+            return where_conditions, description
     
     for keyword, (condition, description) in comment_mappings.items():
         if keyword in query_lower:
