@@ -36,7 +36,7 @@ Table schema:
 - monitor_id: Monitor identifier (from monitor_rules table)
 - monitor_name: Monitor system name (from monitored_feeds table, use m.monitor_system_name in WHERE clauses)
 - audit_type: Audit type
-- log_comment: 'AUDIT' = OK, 'ROLLBACK' = fixed after violation, 'VIOLATED' = rule failed/violated (use this for failed rules)
+- log_comment: 'AUDIT' = OK, 'ROLLBACK' = fixed after violation, 'COMMIT' = rule failed/violated (use this for failed rules)
 - priority: Priority level (LOW, MEDIUM, HIGH, CRITICAL)
 - channel: 'EMAIL', 'PAGERDUTY', 'SLACK', 'SMS', 'OPSGENIE'
 - receiver: Receiver information
@@ -59,7 +59,7 @@ Examples:
 - "Show me high priority email alerts from today" → {"where_conditions": ["l.priority IN ('HIGH', 'CRITICAL')", "l.channel = 'EMAIL'", "DATE(l.log_timestamp) = CURRENT_DATE"], "query_description": "high priority email alerts from today"}
 - "Find logs for rule 5001" → {"where_conditions": ["l.rule_id = 5001"], "query_description": "logs for rule 5001"}
 - "Show me recent violations by priority" → {"where_conditions": ["l.log_comment = 'COMMIT'", "l.log_timestamp >= NOW() - INTERVAL '7 days'"], "query_description": "recent violations"}
-- "Get all critical alerts sent via Slack" → {"where_conditions": ["l.priority = 'COMMIT'", "l.channel = 'SLACK'"], "query_description": "critical Slack alerts"}
+- "Get all critical alerts sent via Slack" → {"where_conditions": ["l.priority = 'CRITICAL'", "l.channel = 'SLACK'"], "query_description": "critical Slack alerts"}
 - "Show me violations that were fixed within the last 24 hours" → {"where_conditions": ["l.log_comment = 'ROLLBACK'", "l.log_timestamp >= NOW() - INTERVAL '24 hours'"], "query_description": "recently fixed violations"}
 - "Give me a list of events for channel EMAIL in last one month" → {"where_conditions": ["l.channel = 'EMAIL'", "l.log_timestamp >= NOW() - INTERVAL '30 days'"], "query_description": "email events from last month"}
 - "Show me logs for SAP monitor" → {"where_conditions": ["m.monitor_system_name ILIKE '%SAP%'"], "query_description": "logs for SAP monitor"}
@@ -158,11 +158,11 @@ def fallback_word_matching(user_query: str) -> Tuple[List[str], str]:
     
     # Log comment matching
     comment_mappings = {
-        'violated': ('l.log_comment = \'VIOLATED\'', 'violated events'),
-        'violation': ('l.log_comment = \'VIOLATED\'', 'violated events'),
-        'violations': ('l.log_comment = \'VIOLATED\'', 'violated events'),
-        'failed': ('l.log_comment = \'VIOLATED\'', 'failed events'),
-        'failures': ('l.log_comment = \'VIOLATED\'', 'failed events'),
+        'violated': ('l.log_comment = \'COMMIT\'', 'violated events'),
+        'violation': ('l.log_comment = \'COMMIT\'', 'violated events'),
+        'violations': ('l.log_comment = \'COMMIT\'', 'violated events'),
+        'failed': ('l.log_comment = \'COMMIT\'', 'failed events'),
+        'failures': ('l.log_comment = \'COMMIT\'', 'failed events'),
         'audit': ('l.log_comment = \'AUDIT\'', 'audit logs'),
         'audits': ('l.log_comment = \'AUDIT\'', 'audit logs'),
         'ok': ('l.log_comment = \'AUDIT\'', 'audit logs'),
