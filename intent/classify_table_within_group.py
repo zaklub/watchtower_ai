@@ -112,11 +112,13 @@ ANALYTICS: Use for complex queries that require joins or aggregations across mon
 - Queries with "most", "highest", "average", "count", "group by"
 - Comparing monitors or analyzing monitor patterns
 - Examples: "which monitors have most conditions", "average conditions per monitor", "monitor statistics"
+- IMPORTANT: Ignore output format keywords like "plot", "chart", "graph", "list", "show" - these only affect response format, not data source
 
 User Query: "{user_query}"
 
 IMPORTANT EXAMPLES:
 - "Show me all monitors" → MONITORED_FEEDS
+- "Plot me a chart of all monitors" → MONITORED_FEEDS (same data, different output format)
 - "Monitor configuration for SAP" → MONITORED_FEEDS
 - "What conditions does monitor X have?" → MONITOR_CONDITIONS
 - "Which monitors have the most conditions?" → ANALYTICS
@@ -156,12 +158,16 @@ ANALYTICS: Use for complex queries that require aggregations or analysis of fact
 - Queries with "most", "highest", "average", "count", "group by", "trends"
 - Analyzing patterns in events or performance data
 - Examples: "trend of events over time", "average performance by monitor", "event patterns"
+- IMPORTANT: Ignore output format keywords like "plot", "chart", "graph", "list", "show" - these only affect response format, not data source
 
 User Query: "{user_query}"
 
 IMPORTANT EXAMPLES:
 - "Show me events from last week" → MONITOR_FACTS
 - "Performance data for CPU monitor" → MONITOR_FACTS
+- "Plot me a chart of events from last week" → MONITOR_FACTS (same data, different output format)
+- "Give me a list of monitors with feeds" → MONITOR_FACTS
+- "Plot me a chart of monitors with feeds" → MONITOR_FACTS (same data, different output format)
 - "Trend of events over time" → ANALYTICS
 - "Average performance by monitor" → ANALYTICS
 
