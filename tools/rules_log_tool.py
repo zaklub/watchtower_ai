@@ -54,17 +54,17 @@ Expected JSON format (MUST be complete):
 }
 
 Examples:
-- "Show me all violated events" → {"where_conditions": ["l.log_comment = 'VIOLATED'"], "query_description": "violated events"}
+- "Show me all violated events" → {"where_conditions": ["l.log_comment = 'COMMIT'"], "query_description": "violated events"}
 - "Get audit logs from last week" → {"where_conditions": ["l.log_comment = 'AUDIT'", "l.log_timestamp >= NOW() - INTERVAL '7 days'"], "query_description": "audit logs from last week"}
 - "Show me high priority email alerts from today" → {"where_conditions": ["l.priority IN ('HIGH', 'CRITICAL')", "l.channel = 'EMAIL'", "DATE(l.log_timestamp) = CURRENT_DATE"], "query_description": "high priority email alerts from today"}
 - "Find logs for rule 5001" → {"where_conditions": ["l.rule_id = 5001"], "query_description": "logs for rule 5001"}
-- "Show me recent violations by priority" → {"where_conditions": ["l.log_comment = 'VIOLATED'", "l.log_timestamp >= NOW() - INTERVAL '7 days'"], "query_description": "recent violations"}
-- "Get all critical alerts sent via Slack" → {"where_conditions": ["l.priority = 'CRITICAL'", "l.channel = 'SLACK'"], "query_description": "critical Slack alerts"}
+- "Show me recent violations by priority" → {"where_conditions": ["l.log_comment = 'COMMIT'", "l.log_timestamp >= NOW() - INTERVAL '7 days'"], "query_description": "recent violations"}
+- "Get all critical alerts sent via Slack" → {"where_conditions": ["l.priority = 'COMMIT'", "l.channel = 'SLACK'"], "query_description": "critical Slack alerts"}
 - "Show me violations that were fixed within the last 24 hours" → {"where_conditions": ["l.log_comment = 'ROLLBACK'", "l.log_timestamp >= NOW() - INTERVAL '24 hours'"], "query_description": "recently fixed violations"}
 - "Give me a list of events for channel EMAIL in last one month" → {"where_conditions": ["l.channel = 'EMAIL'", "l.log_timestamp >= NOW() - INTERVAL '30 days'"], "query_description": "email events from last month"}
 - "Show me logs for SAP monitor" → {"where_conditions": ["m.monitor_system_name ILIKE '%SAP%'"], "query_description": "logs for SAP monitor"}
-- "Show me violations for CPU monitor" → {"where_conditions": ["l.log_comment = 'VIOLATED'", "m.monitor_system_name ILIKE '%CPU%'"], "query_description": "violations for CPU monitor"}
-- "Give me the list of all the Monitors for which the rules have failed in last 2 months" → {"where_conditions": ["l.log_comment = 'VIOLATED'", "l.log_timestamp >= NOW() - INTERVAL '2 months'"], "query_description": "monitors with failed rules in last 2 months"}
+- "Show me violations for CPU monitor" → {"where_conditions": ["l.log_comment = 'COMMIT'", "m.monitor_system_name ILIKE '%CPU%'"], "query_description": "violations for CPU monitor"}
+- "Give me the list of all the Monitors for which the rules have failed in last 2 months" → {"where_conditions": ["l.log_comment = 'COMMIT'", "l.log_timestamp >= NOW() - INTERVAL '2 months'"], "query_description": "monitors with failed rules in last 2 months"}
 
 Remember: Your response must be a COMPLETE JSON object. No partial responses.
 
