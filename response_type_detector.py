@@ -33,12 +33,14 @@ Available Response Types:
 
 CRITICAL RULE: If the query contains "list", "events", "logs", or "records" and asks to see data, it should be TABLE, not TEXT.
 
+HIGHEST PRIORITY RULE: If the query contains "summary", "summarize", "summarise", "describe", "explain", "what is", "how many", "total", "count" - it should ALWAYS be TEXT, regardless of other words in the query.
+
 CRITICAL: You must respond with EXACTLY one of these three words: TABLE, CHART, or TEXT
 
 IMPORTANT: Pay special attention to words like:
-- "summarize", "summarise", "summary" → TEXT
-- "describe", "explain", "what is" → TEXT  
-- "how many", "total", "count" → TEXT
+- "summarize", "summarise", "summary" → TEXT (HIGHEST PRIORITY)
+- "describe", "explain", "what is" → TEXT (HIGHEST PRIORITY)
+- "how many", "total", "count" → TEXT (HIGHEST PRIORITY)
 - "chart", "graph", "plot" → CHART
 - "show me", "list", "get", "find", "display" → TABLE
 - "events", "logs", "records" → TABLE (when asking to see data)
@@ -57,6 +59,7 @@ CRITICAL EXAMPLES:
 - "Explain what happened yesterday" → TEXT
 - "Give me a summary of violations" → TEXT
 - "Give me a summary of all rules" → TEXT
+- "Give me a Summary of all the Failed Rules in last 2 months" → TEXT (contains "Summary")
 - "Summarize all rules" → TEXT
 - "Summary of rules" → TEXT
 
